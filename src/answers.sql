@@ -47,7 +47,7 @@ WITH counts AS (
         INNER JOIN employees e ON e.office_id = o.id
     GROUP BY o.id
 ) (
-    SELECT o.name,
+    SELECT o.address,
         COUNT(o.id) as count
     FROM offices o
         INNER JOIN employees e ON e.office_id = o.id
@@ -58,9 +58,9 @@ WITH counts AS (
         )
     LIMIT 1
 )
-UNION
+UNION ALL
 (
-    SELECT o.name,
+    SELECT o.address,
         COUNT(o.id) as count
     FROM offices o
         INNER JOIN employees e ON e.office_id = o.id
@@ -70,7 +70,8 @@ UNION
             FROM counts
         )
     LIMIT 1
-) --8
+);
+--8
 SELECT e.uuid,
     e.first_name || ' ' || e.last_name as full_name,
     e.email,
