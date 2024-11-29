@@ -1,25 +1,37 @@
 -- Your answers here:
 -- 1
 --
-SELECT type account_type,
-    ROUND(SUM(mount)::numeric, 2) money_sum
-FROM accounts
-GROUP BY type;
+SELECT
+	TYPE ACCOUNT_TYPE,
+	ROUND(SUM(MOUNT)::NUMERIC, 2) MONEY_SUM
+FROM
+	ACCOUNTS
+GROUP BY
+	TYPE;
+
 --
 --
 --
 --
 -- 2
 --
-SELECT COUNT(*) AS count_user_at_least_2_current_account
-FROM (
-        SELECT u.id
-        FROM users u
-            INNER JOIN accounts a ON u.id = a.user_id
-        WHERE a.type = 'CURRENT_ACCOUNT'
-        GROUP BY u.id
-        HAVING COUNT(u.id) > 1
-    );
+SELECT
+	COUNT(*) AS COUNT_USER_AT_LEAST_2_CURRENT_ACCOUNT
+FROM
+	(
+		SELECT
+			U.ID
+		FROM
+			USERS U
+			INNER JOIN ACCOUNTS A ON U.ID = A.USER_ID
+		WHERE
+			A.TYPE = 'CURRENT_ACCOUNT'
+		GROUP BY
+			U.ID
+		HAVING
+			COUNT(U.ID) > 1
+	);
+
 --
 --
 --
@@ -27,13 +39,18 @@ FROM (
 --
 -- 3
 --
-SELECT id,
-    account_id,
-    type,
-    mount
-FROM accounts
-ORDER BY mount DESC
-LIMIT 5;
+SELECT
+	ID,
+	ACCOUNT_ID,
+	TYPE,
+	MOUNT
+FROM
+	ACCOUNTS
+ORDER BY
+	MOUNT DESC
+LIMIT
+	5;
+
 --
 --
 --
@@ -41,7 +58,8 @@ LIMIT 5;
 -- 4
 -- I MAKE SURE I USE EVERY ACCOUNT BY UNION ALL!
 -- INNER JOIN MAY LEAVE OUT USERS WITH NO MOVEMENTS
-CREATE OR REPLACE FUNCTION get_accounts_final_balance() RETURNS TABLE(account_id UUID, money NUMERIC(15, 2)) AS $$ BEGIN RETURN QUERY WITH accounts_money_movements AS (
+CREATE
+OR REPLACE FUNCTION GET_ACCOUNTS_FINAL_BALANCE () RETURNS TABLE (ACCOUNT_ID UUID, MONEY NUMERIC(15, 2)) AS $$ BEGIN RETURN QUERY WITH accounts_money_movements AS (
         (
             -- account_from transactions
             SELECT account_from AS account_id,
@@ -77,20 +95,25 @@ SELECT am.account_id,
 FROM accounts_money_movements am
 GROUP BY am.account_id;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE PLPGSQL;
+
 --
 -- Solution applying function  get_accounts_final_balance
 --
-SELECT u.id,
-    u.name,
-    SUM (ab.money) all_money
-FROM get_accounts_final_balance() ab
-    INNER JOIN accounts a ON ab.account_id = a.id
-    INNER JOIN users u ON u.id = a.user_id
-GROUP BY u.id,
-    u.name
-ORDER BY all_money DESC
+SELECT
+	U.ID,
+	U.NAME,
+	SUM(AB.MONEY) ALL_MONEY
+FROM
+	GET_ACCOUNTS_FINAL_BALANCE () AB
+	INNER JOIN ACCOUNTS A ON AB.ACCOUNT_ID = A.ID
+	INNER JOIN USERS U ON U.ID = A.USER_ID
+GROUP BY
+	U.ID,
+	U.NAME
+ORDER BY ALL_MONEY DESC
 LIMIT 3;
+
 --
 --
 --
@@ -133,23 +156,24 @@ BEGIN
 	FROM get_accounts_final_balance() 
 	WHERE account_id = account_id_a;
 	
-	IF account_balance_a < 731823.56 THEN
+	IF account_balance_a < 500 THEN
 		RAISE EXCEPTION 'Account balance is insufficient!';
 	ELSE 
 		INSERT INTO movements  (id, type, account_from, account_to, mount) 
-		VALUES (gen_random_uuid(), 'OUT', account_id_a,account_id_b );
-		RAISE NOTICE 'Movement OUT % USD from % MADE SUCCESSFULLY!', 731823.56, account_id_a;
+		VALUES (gen_random_uuid(), 'OUT', account_id_a,account_id_b , 500);
+		RAISE NOTICE 'Movement OUT % USD from % MADE SUCCESSFULLY!', 500, account_id_a;
 	END IF;
 
 	--f. Once the transaction is correct, make a commit
-
-	COMMIT;
 
 	SELECT money into account_balance_b
 	FROM get_accounts_final_balance() 
 	WHERE account_id = account_id_b;
 
 	RAISE NOTICE 'Account balance from % is %', account_id_b, account_balance_b;
+	
+
+	RAISE NOTICE 'Transaction finished ok!';
 
 EXCEPTION
 --e. If the transaction fails, make the correction on step c to avoid the failure:
@@ -158,42 +182,69 @@ EXCEPTION
     WHEN OTHERS THEN
         RAISE NOTICE 'Transfer failed. Error: %', SQLERRM;
 		ROLLBACK;
+		RAISE NOTICE 'ROLLBACK!';
+
 END;
 $$;
+
 --
 --
 --
 --
 --6. All the movements and the user information with the account 3b79e403-c788-495a-a8ca-86ad7643afaf
 --
-SELECT * 
-FROM users u INNER JOIN accounts a ON u.id = a.user_id 
-INNER JOIN movements m ON m.account_from = a.id OR m.account_to = a.id
-WHERE a.id = '3b79e403-c788-495a-a8ca-86ad7643afaf';
+SELECT
+	*
+FROM
+	USERS U
+	INNER JOIN ACCOUNTS A ON U.ID = A.USER_ID
+	INNER JOIN MOVEMENTS M ON M.ACCOUNT_FROM = A.ID
+	OR M.ACCOUNT_TO = A.ID
+WHERE
+	A.ID = '3b79e403-c788-495a-a8ca-86ad7643afaf';
+
 --
 --
 --
 --
 -- 7. The name and email of the user with the highest money in all his/her accounts
 --
-SELECT u.name, u.email, SUM(ab.money) money_balance FROM get_accounts_final_balance() ab
-INNER JOIN accounts a ON a.id = ab.account_id 
-INNER JOIN users u ON u.id = a.user_id
-GROUP BY u.name, u.email
-ORDER BY money_balance DESC
-LIMIT 1;
+SELECT
+	U.NAME,
+	U.EMAIL,
+	SUM(AB.MONEY) MONEY_BALANCE
+FROM
+	GET_ACCOUNTS_FINAL_BALANCE () AB
+	INNER JOIN ACCOUNTS A ON A.ID = AB.ACCOUNT_ID
+	INNER JOIN USERS U ON U.ID = A.USER_ID
+GROUP BY
+	U.NAME,
+	U.EMAIL
+ORDER BY
+	MONEY_BALANCE DESC
+LIMIT
+	1;
+
 --
 --
 --
 --
 -- 8. Show all the movements for the user Kaden.Gusikowski@gmail.com order by account type and created_at on the movements table
 --
-SELECT u.email, a.id as account_id, a.type account_type, m.id movement_id, m.type movement_type, m.account_from, m.account_to, m.mount, m.created_at 
-FROM users u
-INNER JOIN accounts a ON u.id = a.user_id
-INNER JOIN movements m ON m.account_from = a.id OR m.account_to = a.id
-WHERE u.email = 'Kaden.Gusikowski@gmail.com'
-ORDER BY a.type, m.created_at
-
-
-
+SELECT
+	U.EMAIL,
+	A.ID AS ACCOUNT_ID,
+	A.TYPE ACCOUNT_TYPE,
+	M.ID MOVEMENT_ID,
+	M.TYPE MOVEMENT_TYPE,
+	M.ACCOUNT_FROM,
+	M.ACCOUNT_TO,
+	M.MOUNT,
+	M.CREATED_AT
+FROM
+	USERS U
+	INNER JOIN ACCOUNTS A ON U.ID = A.USER_ID
+	INNER JOIN MOVEMENTS M ON M.ACCOUNT_FROM = A.ID
+	OR M.ACCOUNT_TO = A.ID
+WHERE	U.EMAIL = 'Kaden.Gusikowski@gmail.com'
+ORDER BY	A.TYPE,	M.CREATED_AT;

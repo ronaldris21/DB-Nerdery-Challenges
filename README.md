@@ -115,9 +115,11 @@ LIMIT 5;
 4. Get the three users with the most money after making movements.
 
 ```sql
+-- 4
 -- I MAKE SURE I USE EVERY ACCOUNT BY UNION ALL!
 -- INNER JOIN MAY LEAVE OUT USERS WITH NO MOVEMENTS
-CREATE OR REPLACE FUNCTION get_accounts_final_balance() RETURNS TABLE(account_id UUID, money NUMERIC(15, 2)) AS $$ BEGIN RETURN QUERY WITH accounts_money_movements AS (
+CREATE
+OR REPLACE FUNCTION GET_ACCOUNTS_FINAL_BALANCE () RETURNS TABLE (ACCOUNT_ID UUID, MONEY NUMERIC(15, 2)) AS $$ BEGIN RETURN QUERY WITH accounts_money_movements AS (
         (
             -- account_from transactions
             SELECT account_from AS account_id,
@@ -153,19 +155,23 @@ SELECT am.account_id,
 FROM accounts_money_movements am
 GROUP BY am.account_id;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE PLPGSQL;
+
 --
 -- Solution applying function  get_accounts_final_balance
 --
-SELECT u.id,
-    u.name,
-    SUM (ab.money) all_money
-FROM get_accounts_final_balance() ab
-    INNER JOIN accounts a ON ab.account_id = a.id
-    INNER JOIN users u ON u.id = a.user_id
-GROUP BY u.id,
-    u.name
-ORDER BY all_money DESC
+SELECT
+	U.ID,
+	U.NAME,
+	SUM(AB.MONEY) ALL_MONEY
+FROM
+	GET_ACCOUNTS_FINAL_BALANCE () AB
+	INNER JOIN ACCOUNTS A ON AB.ACCOUNT_ID = A.ID
+	INNER JOIN USERS U ON U.ID = A.USER_ID
+GROUP BY
+	U.ID,
+	U.NAME
+ORDER BY ALL_MONEY DESC
 LIMIT 3;
 ```
 
@@ -186,13 +192,13 @@ LIMIT 3;
     d. Put your answer here if the transaction fails(YES/NO):
 
     ```sql
-        --Yes, not enough money for literal C transaction
+        --Yes, not enough money in the account for literal C transaction
     ```
 
     e. If the transaction fails, make the correction on step _c_ to avoid the failure:
 
     ```sql
-        -- Errors fails were corrected using a EXCEPTION statement
+        -- Errors fails were corrected using a EXCEPTION statement, and reducing the amount of the OUT movement to 500 USD
     ```
 
     f. Once the transaction is correct, make a commit
@@ -293,10 +299,21 @@ LIMIT 1;
 8. Show all the movements for the user `Kaden.Gusikowski@gmail.com` order by account type and created_at on the movements table
 
 ```sql
-SELECT u.email, a.id as account_id, a.type account_type, m.id movement_id, m.type movement_type, m.account_from, m.account_to, m.mount, m.created_at 
-FROM users u
-INNER JOIN accounts a ON u.id = a.user_id
-INNER JOIN movements m ON m.account_from = a.id OR m.account_to = a.id
-WHERE u.email = 'Kaden.Gusikowski@gmail.com'
-ORDER BY a.type, m.created_at
+SELECT
+	U.EMAIL,
+	A.ID AS ACCOUNT_ID,
+	A.TYPE ACCOUNT_TYPE,
+	M.ID MOVEMENT_ID,
+	M.TYPE MOVEMENT_TYPE,
+	M.ACCOUNT_FROM,
+	M.ACCOUNT_TO,
+	M.MOUNT,
+	M.CREATED_AT
+FROM
+	USERS U
+	INNER JOIN ACCOUNTS A ON U.ID = A.USER_ID
+	INNER JOIN MOVEMENTS M ON M.ACCOUNT_FROM = A.ID
+	OR M.ACCOUNT_TO = A.ID
+WHERE	U.EMAIL = 'Kaden.Gusikowski@gmail.com'
+ORDER BY	A.TYPE,	M.CREATED_AT;
 ```
