@@ -22,14 +22,15 @@ ORDER BY count DESC,
     c.name
 LIMIT 5;
 -- 4
-SELECT supervisor_id,
-    COUNT(supervisor_id) as count
-FROM employees
-GROUP BY supervisor_id
+SELECT e.supervisor_id,
+    COUNT(e.id) as count
+FROM employees e
+WHERE e.supervisor_id IS NOT NULL
+GROUP BY e.supervisor_id
 ORDER BY count DESC
 LIMIT 3;
 -- 5
-SELECT COUNT(*) list_of_office
+SELECT COUNT(*) offices_in_colorado
 FROM offices o
     INNER JOIN states s ON o.state_id = s.id
 WHERE s.name = 'Colorado';
@@ -42,43 +43,30 @@ GROUP BY o.name
 ORDER BY count DESC;
 -- 7
 WITH counts AS (
-    SELECT COUNT(o.id) AS count
+    SELECT o.address, COUNT(o.id) AS count
     FROM offices o
         INNER JOIN employees e ON e.office_id = o.id
-    GROUP BY o.id
-) (
-    SELECT o.address,
-        COUNT(o.id) as count
-    FROM offices o
-        INNER JOIN employees e ON e.office_id = o.id
-    GROUP BY o.id
-    HAVING COUNT(o.id) = (
-            SELECT MAX(count)
-            FROM counts
-        )
-    LIMIT 1
+    GROUP BY o.address
+	ORDER BY count
+) 
+(
+    SELECT * FROM counts
+	ORDER BY count DESC
+	LIMIT 1 
 )
 UNION ALL
 (
-    SELECT o.address,
-        COUNT(o.id) as count
-    FROM offices o
-        INNER JOIN employees e ON e.office_id = o.id
-    GROUP BY o.id
-    HAVING COUNT(o.id) = (
-            SELECT MIN(count)
-            FROM counts
-        )
-    LIMIT 1
+	SELECT * FROM counts
+	LIMIT 1 
 );
 --8
 SELECT e.uuid,
     e.first_name || ' ' || e.last_name as full_name,
     e.email,
     e.job_title,
-    o.name company,
+    o.name as company,
     c.name country,
-    s.name state,
+    s.name as state,
     es.first_name as boss_name
 FROM employees e
     INNER JOIN offices o ON e.office_id = o.id

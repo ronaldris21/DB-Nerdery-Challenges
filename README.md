@@ -88,8 +88,9 @@ GROUP BY c.name;
 2. How many employees do not have supervisores.
 
 ```sql
-SELECT COUNT(*) employees_without_bosses FROM employees 
-WHERE supervisor_id IS NULL
+SELECT COUNT(*) employees_without_bosses
+FROM employees
+WHERE supervisor_id IS NULL;
 ```
 
 <p align="center">
@@ -119,9 +120,11 @@ LIMIT 5;
 4. Three supervisors with the most amount of employees they are in charge.
 
 ```sql
-SELECT supervisor_id, COUNT(supervisor_id) as count 
-FROM employees 
-GROUP BY supervisor_id
+SELECT e.supervisor_id,
+    COUNT(e.id) as count
+FROM employees e
+WHERE e.supervisor_id IS NOT NULL
+GROUP BY e.supervisor_id
 ORDER BY count DESC
 LIMIT 3;
 ```
@@ -133,9 +136,10 @@ LIMIT 3;
 5. How many offices are in the state of Colorado (United States).
 
 ```sql
-SELECT COUNT(*) list_of_office
-FROM offices o INNER JOIN states s ON o.state_id = s.id
-WHERE s.name = 'Colorado'
+SELECT COUNT(*) offices_in_colorado
+FROM offices o
+    INNER JOIN states s ON o.state_id = s.id
+WHERE s.name = 'Colorado';
 ```
 
 <p align="center">
@@ -145,8 +149,10 @@ WHERE s.name = 'Colorado'
 6. The name of the office with its number of employees ordered in a desc.
 
 ```sql
-SELECT  o.name, COUNT(o.name) as count
-FROM offices o INNER JOIN employees e ON e.office_id = o.id
+SELECT o.name,
+    COUNT(o.name) as count
+FROM offices o
+    INNER JOIN employees e ON e.office_id = o.id
 GROUP BY o.name
 ORDER BY count DESC;
 ```
@@ -160,36 +166,22 @@ ORDER BY count DESC;
 ```sql
 
 WITH counts AS (
-    SELECT COUNT(o.id) AS count
+    SELECT o.address, COUNT(o.id) AS count
     FROM offices o
         INNER JOIN employees e ON e.office_id = o.id
-    GROUP BY o.id
-) (
-    SELECT o.name,
-        COUNT(o.id) as count
-    FROM offices o
-        INNER JOIN employees e ON e.office_id = o.id
-    GROUP BY o.id
-    HAVING COUNT(o.id) = (
-            SELECT MAX(count)
-            FROM counts
-        )
-    LIMIT 1
-)
-UNION
+    GROUP BY o.address
+	ORDER BY count
+) 
 (
-    SELECT o.name,
-        COUNT(o.id) as count
-    FROM offices o
-        INNER JOIN employees e ON e.office_id = o.id
-    GROUP BY o.id
-    HAVING COUNT(o.id) = (
-            SELECT MIN(count)
-            FROM counts
-        )
-    LIMIT 1
+    SELECT * FROM counts
+	ORDER BY count DESC
+	LIMIT 1 
 )
-
+UNION ALL
+(
+	SELECT * FROM counts
+	LIMIT 1 
+);
 ```
 
 <p align="center">
@@ -203,9 +195,9 @@ SELECT e.uuid,
     e.first_name || ' ' || e.last_name as full_name,
     e.email,
     e.job_title,
-    o.name company,
+    o.name as company,
     c.name country,
-    s.name state,
+    s.name as state,
     es.first_name as boss_name
 FROM employees e
     INNER JOIN offices o ON e.office_id = o.id
