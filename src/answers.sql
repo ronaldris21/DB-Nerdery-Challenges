@@ -126,6 +126,9 @@ DECLARE
 	
     account_id_a UUID := '3b79e403-c788-495a-a8ca-86ad7643afaf';
     account_id_b UUID := 'fd244313-36e5-4a17-a27c-f8265bc46590';
+
+	transfer_mount DOUBLE PRECISION := 50.75;
+	out_mount DOUBLE PRECISION := 20;
 BEGIN
 
 	--a. First, get the ammount for the account `3b79e403-c788-495a-a8ca-86ad7643afaf` and `fd244313-36e5-4a17-a27c-f8265bc46590` after all their movements.
@@ -142,12 +145,12 @@ BEGIN
 	RAISE NOTICE 'Account balance from % is %', account_id_b, account_balance_b;
 
 	--b. Add a new movement with the information: from: 3b79e403-c788-495a-a8ca-86ad7643afaf make a transfer to fd244313-36e5-4a17-a27c-f8265bc46590 mount: 50.75
-	IF account_balance_a < 50.75 THEN
+	IF account_balance_a < transfer_mount THEN
 		RAISE EXCEPTION 'Account balance is insufficient!';
 	ELSE 
 		INSERT INTO movements  (id, type, account_from, account_to, mount) 
-		VALUES (gen_random_uuid(), 'TRANSFER', account_id_a,account_id_b, 50.75);
-		RAISE NOTICE 'Transfer % USD from % to % MADE SUCCESSFULLY!', 50.75, account_id_a, account_id_b;
+		VALUES (gen_random_uuid(), 'TRANSFER', account_id_a,account_id_b, transfer_mount);
+		RAISE NOTICE 'Transfer % USD from % to % MADE SUCCESSFULLY!', transfer_mount, account_id_a, account_id_b;
 	END IF;
 
 	--c. Add a new movement with the information: from: 3b79e403-c788-495a-a8ca-86ad7643afaf type: OUT mount: 731823.56
@@ -156,12 +159,12 @@ BEGIN
 	FROM get_accounts_final_balance() 
 	WHERE account_id = account_id_a;
 	
-	IF account_balance_a < 500 THEN
+	IF account_balance_a < out_mount THEN
 		RAISE EXCEPTION 'Account balance is insufficient!';
 	ELSE 
 		INSERT INTO movements  (id, type, account_from, account_to, mount) 
-		VALUES (gen_random_uuid(), 'OUT', account_id_a,account_id_b , 500);
-		RAISE NOTICE 'Movement OUT % USD from % MADE SUCCESSFULLY!', 500, account_id_a;
+		VALUES (gen_random_uuid(), 'OUT', account_id_a,account_id_b , out_mount);
+		RAISE NOTICE 'Movement OUT % USD from % MADE SUCCESSFULLY!', out_mount, account_id_a;
 	END IF;
 
 	--f. Once the transaction is correct, make a commit
